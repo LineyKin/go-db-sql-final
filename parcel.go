@@ -12,6 +12,7 @@ func NewParcelStore(db *sql.DB) ParcelStore {
 	return ParcelStore{db: db}
 }
 
+// метод, добавляющий новую посылку
 func (s ParcelStore) Add(p Parcel) (int, error) {
 	sqlPattern := "INSERT INTO parcel (client, status, address, created_at) VALUES(:client, :status, :address, :created_at)"
 
@@ -35,14 +36,18 @@ func (s ParcelStore) Add(p Parcel) (int, error) {
 	return int(id), nil
 }
 
+// метод, получающий информацию по конкретной посылке (по трекеру)
 func (s ParcelStore) Get(number int) (Parcel, error) {
-	// реализуйте чтение строки по заданному number
-	// здесь из таблицы должна вернуться только одна строка
+	sqlPattern := "SELECT number, client, status, address, created_at FROM parcel WHERE number = :number"
+	row := s.db.QueryRow(sqlPattern, sql.Named("number", number))
 
-	// заполните объект Parcel данными из таблицы
+	// пустой экземпляр структуры Parcel
 	p := Parcel{}
 
-	return p, nil
+	// заполняем экземпляр p данными из БД
+	err := row.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
+
+	return p, err
 }
 
 func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
