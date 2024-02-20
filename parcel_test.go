@@ -31,7 +31,7 @@ func getTestParcel() Parcel {
 
 // TestAddGetDelete проверяет добавление, получение и удаление посылки
 func TestAddGetDelete(t *testing.T) {
-	// настройте подключение к БД
+	// подключаемся к БД
 	db, err := sql.Open("sqlite", "demo.db")
 	// тест подключения к БД. Останавливаем, если ошибка
 	require.NoError(t, err)
@@ -78,18 +78,42 @@ func TestAddGetDelete(t *testing.T) {
 
 // TestSetAddress проверяет обновление адреса
 func TestSetAddress(t *testing.T) {
-	// prepare
-	db, err := // настройте подключение к БД
+	// подключаемся к БД
+	db, err := sql.Open("sqlite", "demo.db")
+	// тест подключения к БД. Останавливаем, если ошибка
+	require.NoError(t, err)
+	defer db.Close()
+
+	store := NewParcelStore(db)
+	parcel := getTestParcel()
 
 	// add
-	// добавьте новую посылку в БД, убедитесь в отсутствии ошибки и наличии идентификатора
+	// добавим новую запись
+	newParcelNumber, err := store.Add(parcel)
+	// тест, что нет ошибки
+	require.NoError(t, err)
+
+	// тест на возврат идентификатора новой записи
+	require.NotEmpty(t, newParcelNumber)
 
 	// set address
-	// обновите адрес, убедитесь в отсутствии ошибки
 	newAddress := "new test address"
+	// обновим адрес
+	err = store.SetAddress(newParcelNumber, newAddress)
+
+	// тест, что нет ошибок
+	require.NoError(t, err)
 
 	// check
 	// получите добавленную посылку и убедитесь, что адрес обновился
+	// получим нашу новую запись
+	newParcel, err := store.Get(newParcelNumber)
+
+	// тест на отсутствие ошибок. Если есть - тормозим
+	require.NoError(t, err)
+
+	// тест на обновление адреса
+	require.Equal(t, newParcel.Address, newAddress)
 }
 
 // TestSetStatus проверяет обновление статуса
