@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -18,6 +18,8 @@ var (
 	// randRange использует randSource для генерации случайных чисел
 	randRange = rand.New(randSource)
 )
+
+const DB_NAME = "tracker.db"
 
 // getTestParcel возвращает тестовую посылку
 func getTestParcel() Parcel {
@@ -32,7 +34,7 @@ func getTestParcel() Parcel {
 // TestAddGetDelete проверяет добавление, получение и удаление посылки
 func TestAddGetDelete(t *testing.T) {
 	// подключаемся к БД
-	db, err := sql.Open("sqlite", "demo.db")
+	db, err := sql.Open("sqlite", DB_NAME)
 	// тест подключения к БД. Останавливаем, если ошибка
 	require.NoError(t, err)
 	defer db.Close()
@@ -79,7 +81,7 @@ func TestAddGetDelete(t *testing.T) {
 // TestSetAddress проверяет обновление адреса
 func TestSetAddress(t *testing.T) {
 	// подключаемся к БД
-	db, err := sql.Open("sqlite", "demo.db")
+	db, err := sql.Open("sqlite", DB_NAME)
 	// тест подключения к БД. Останавливаем, если ошибка
 	require.NoError(t, err)
 	defer db.Close()
@@ -119,10 +121,13 @@ func TestSetAddress(t *testing.T) {
 // TestSetStatus проверяет обновление статуса
 func TestSetStatus(t *testing.T) {
 	// подключаемся к БД
-	db, err := sql.Open("sqlite", "demo.db")
+	db, err := sql.Open("sqlite", DB_NAME)
 	// тест подключения к БД. Останавливаем, если ошибка
 	require.NoError(t, err)
 	defer db.Close()
+
+	store := NewParcelStore(db)
+	parcel := getTestParcel()
 
 	// add
 	// добавим новую запись
@@ -153,8 +158,13 @@ func TestSetStatus(t *testing.T) {
 
 // TestGetByClient проверяет получение посылок по идентификатору клиента
 func TestGetByClient(t *testing.T) {
-	// prepare
-	db, err := // настройте подключение к БД
+	// подключаемся к БД
+	db, err := sql.Open("sqlite", DB_NAME)
+	// тест подключения к БД. Останавливаем, если ошибка
+	require.NoError(t, err)
+	defer db.Close()
+
+	store := NewParcelStore(db)
 
 	parcels := []Parcel{
 		getTestParcel(),
@@ -171,7 +181,9 @@ func TestGetByClient(t *testing.T) {
 
 	// add
 	for i := 0; i < len(parcels); i++ {
-		id, err := // добавьте новую посылку в БД, убедитесь в отсутствии ошибки и наличии идентификатора
+		id, err := store.Add(parcels[i])
+		require.NoError(t, err)
+		require.NotEmpty(t, id)
 
 		// обновляем идентификатор добавленной у посылки
 		parcels[i].Number = id
@@ -181,14 +193,21 @@ func TestGetByClient(t *testing.T) {
 	}
 
 	// get by client
-	storedParcels, err := // получите список посылок по идентификатору клиента, сохранённого в переменной client
-	// убедитесь в отсутствии ошибки
-	// убедитесь, что количество полученных посылок совпадает с количеством добавленных
+	storedParcels, err := store.GetByClient(client)
+
+	// тест на отсутствие ошибки
+	require.NoError(t, err)
+
+	// тест на равенство кол-ва полученных и добавленных записей
+	assert.Equal(t, len(storedParcels), len(parcels))
 
 	// check
 	for _, parcel := range storedParcels {
 		// в parcelMap лежат добавленные посылки, ключ - идентификатор посылки, значение - сама посылка
 		// убедитесь, что все посылки из storedParcels есть в parcelMap
 		// убедитесь, что значения полей полученных посылок заполнены верно
+		_, ok := parcelMap[parcel.Number]
+		require.True(t, ok)
+		assert.Equal(t, parcelMap[parcel.Number], parcel)
 	}
 }
