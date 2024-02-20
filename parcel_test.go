@@ -52,7 +52,7 @@ func TestAddGetDelete(t *testing.T) {
 	require.NotEmpty(t, newParcelNumber)
 
 	// добавим полученный идентификатор нашёй тестовой посылке
-	parcel.Number := newParcelNumber
+	parcel.Number = int(newParcelNumber)
 
 	// get
 	// получим нашу новую запись
