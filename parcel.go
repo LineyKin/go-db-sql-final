@@ -50,16 +50,33 @@ func (s ParcelStore) Get(number int) (Parcel, error) {
 	return p, err
 }
 
+// метод, возвращающий все посылки конкретного клиента
 func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
-	// реализуйте чтение строк из таблицы parcel по заданному client
-	// здесь из таблицы может вернуться несколько строк
+
+	sqlPattern := "SELECT number, client, status, address, created_at FROM parcel WHERE client = :client"
+	rows, err := s.db.Query(sqlPattern, sql.Named("client", client))
+
+	if err != nil {
+		return nil, err
+	}
 
 	// заполните срез Parcel данными из таблицы
 	var res []Parcel
 
+	for rows.Next() {
+		p := Parcel{}
+		err := rows.Scan(&p.Number, &p.Client, &p.Status, &p.Address, &p.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		res = append(res, p)
+	}
+
 	return res, nil
 }
 
+// метод, меняющий стату посылки
 func (s ParcelStore) SetStatus(number int, status string) error {
 	sqlPattern := "UPDATE parcel SET status = :status WHERE number = :number"
 
