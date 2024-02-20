@@ -118,11 +118,28 @@ func (s ParcelStore) SetAddress(number int, address string) error {
 	return err
 }
 
+// метод, удаляющий посылку из таблицы по трекеру
 func (s ParcelStore) Delete(number int) error {
-	// реализуйте удаление строки из таблицы parcel
-	// удалять строку можно только если значение статуса registered
+	// проверка, что статус посылки registered
+	isRegistered, err := s.isRegistered(number)
 
-	return nil
+	// если не смогли узнать статус - вернём ошибку
+	if err != nil {
+		return err
+	}
+
+	// если статус не подходит - вернём ошибку
+	if !isRegistered {
+		return nil
+	}
+
+	sqlPattern := "DELETE FROM parcel WHERE number = :number"
+
+	_, err = s.db.Exec(
+		sqlPattern,
+		sql.Named("number", number))
+
+	return err
 }
 
 // метод, проверяющий, что статус посылки registered
