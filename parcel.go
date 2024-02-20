@@ -88,11 +88,36 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 	return err
 }
 
+// метод, обновляющий адрес доставки
 func (s ParcelStore) SetAddress(number int, address string) error {
-	// реализуйте обновление адреса в таблице parcel
+	// получим информацию о посылке по её трекеру
+	p, err := s.Get(number)
+	if err != nil {
+		return err
+	}
+
 	// менять адрес можно только если значение статуса registered
 
-	return nil
+	// Вопрос ревьюеру:
+	// подскажите, как вставить константу ParcelStatusRegistered из main.go ?
+	// я не разобрался, пришлось хардкодить
+	if p.Status != "registered" {
+
+		// Вопрос ревьюеру:
+		// здесь напрашивается сообщение типа "неверный статус"
+		// но во что её обернуть, чтобы соответствовало возвращаемому типу error ?
+		return nil
+	}
+
+	// обновляем адрес
+	sqlPattern := "UPDATE parcel SET address = :address WHERE number = :number"
+
+	_, err = s.db.Exec(
+		sqlPattern,
+		sql.Named("address", address),
+		sql.Named("number", number))
+
+	return err
 }
 
 func (s ParcelStore) Delete(number int) error {
