@@ -90,22 +90,20 @@ func (s ParcelStore) SetStatus(number int, status string) error {
 
 // метод, обновляющий адрес доставки
 func (s ParcelStore) SetAddress(number int, address string) error {
-	// получим информацию о посылке по её трекеру
-	p, err := s.Get(number)
+
+	// проверка, что статус посылки registered
+	isRegistered, err := s.isRegistered(number)
+
+	// если не смогли узнать статус - вернём ошибку
 	if err != nil {
 		return err
 	}
 
-	// менять адрес можно только если значение статуса registered
-
-	// Вопрос ревьюеру:
-	// подскажите, как вставить константу ParcelStatusRegistered из main.go ?
-	// я не разобрался, пришлось хардкодить
-	if p.Status != "registered" {
-
-		// Вопрос ревьюеру:
-		// здесь напрашивается сообщение типа "неверный статус"
-		// но во что её обернуть, чтобы соответствовало возвращаемому типу error ?
+	// если статус не подходит - вернём ошибку
+	if !isRegistered {
+		// вопрос ревьюеру:
+		// тут напрашивается сообщение в духе "неверный статус"
+		// во что его обернуть, чтобы соответствовало возвращаемому типу error ?
 		return nil
 	}
 
@@ -125,4 +123,22 @@ func (s ParcelStore) Delete(number int) error {
 	// удалять строку можно только если значение статуса registered
 
 	return nil
+}
+
+// метод, проверяющий, что статус посылки registered
+func (s ParcelStore) isRegistered(number int) (bool, error) {
+	// получим информацию о посылке по её трекеру
+	p, err := s.Get(number)
+	if err != nil {
+		return false, err
+	}
+
+	// Вопрос ревьюеру:
+	// подскажите, как вставить константу ParcelStatusRegistered из main.go, если это возможно ?
+	// я не разобрался, пришлось хардкодить
+	if p.Status != "registered" {
+		return false, nil
+	}
+
+	return true, nil
 }
