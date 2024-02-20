@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -30,21 +31,49 @@ func getTestParcel() Parcel {
 
 // TestAddGetDelete проверяет добавление, получение и удаление посылки
 func TestAddGetDelete(t *testing.T) {
-	// prepare
-	db, err := // настройте подключение к БД
+	// настройте подключение к БД
+	db, err := sql.Open("sqlite", "demo.db")
+	// тест подключения к БД. Останавливаем, если ошибка
+	require.NoError(t, err)
+	defer db.Close()
+
 	store := NewParcelStore(db)
 	parcel := getTestParcel()
 
 	// add
-	// добавьте новую посылку в БД, убедитесь в отсутствии ошибки и наличии идентификатора
+	// добавим новую запись
+	newParcelNumber, err := store.Add(parcel)
+	// тест, что нет ошибки
+	require.NoError(t, err)
+
+	// тест на возврат идентификатора новой записи
+	require.NotEmpty(t, newParcelNumber)
+
+	// добавим полученный идентификатор нашёй тестовой посылке
+	parcel.Number := newParcelNumber
 
 	// get
-	// получите только что добавленную посылку, убедитесь в отсутствии ошибки
-	// проверьте, что значения всех полей в полученном объекте совпадают со значениями полей в переменной parcel
+	// получим нашу новую запись
+	newParcel, err := store.Get(newParcelNumber)
+
+	// тест на отсутствие ошибок. Если есть - тормозим
+	require.NoError(t, err)
+
+	// тест на одиннаковое заполнение полей
+	assert.Equal(t, newParcel, parcel)
 
 	// delete
-	// удалите добавленную посылку, убедитесь в отсутствии ошибки
-	// проверьте, что посылку больше нельзя получить из БД
+	// удаляем нашу новую посылку
+	err = store.Delete(newParcelNumber)
+
+	// тест на отсутствие ошибок при удалении
+	require.NoError(t, err)
+
+	// попробуем найти удалённую запись в базе
+	_, err = store.Get(newParcelNumber)
+
+	// тест на наличие ошибки sql.ErrNoRows
+	require.Equal(t, err, sql.ErrNoRows)
 }
 
 // TestSetAddress проверяет обновление адреса
