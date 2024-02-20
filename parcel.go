@@ -61,9 +61,14 @@ func (s ParcelStore) GetByClient(client int) ([]Parcel, error) {
 }
 
 func (s ParcelStore) SetStatus(number int, status string) error {
-	// реализуйте обновление статуса в таблице parcel
+	sqlPattern := "UPDATE parcel SET status = :status WHERE number = :number"
 
-	return nil
+	_, err := s.db.Exec(
+		sqlPattern,
+		sql.Named("status", status),
+		sql.Named("number", number))
+
+	return err
 }
 
 func (s ParcelStore) SetAddress(number int, address string) error {
